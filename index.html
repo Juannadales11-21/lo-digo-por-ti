@@ -1,0 +1,160 @@
+<!DOCTYPE html>
+<html lang="es">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <meta name="description" content="Lo Digo Por Ti es una herramienta con IA para generar mensajes claros, humanos e indetectables para WhatsApp, email y mas.">
+  <meta name="keywords" content="mensajes, IA, whatsapp, escribir, textos, comunicacion, lo digo por ti, generador de mensajes">
+  <meta name="robots" content="index, follow">
+  <meta property="og:title" content="Lo Digo Por Ti - Mensajes con IA">
+  <meta property="og:description" content="Genera mensajes claros, humanos e indetectables para cualquier situacion.">
+  <meta property="og:type" content="website">
+  <meta property="og:url" content="https://lodigoporti.com">
+  <meta property="og:image" content="/logo.png">
+  <link rel="icon" href="/favicon.ico">
+  <link rel="canonical" href="https://lodigoporti.com/">
+  <title>Lo Digo Por Ti - Mensajes con IA</title>
+  <link rel="preconnect" href="https://fonts.googleapis.com">
+  <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+  <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700&display=swap" rel="stylesheet">
+  <link rel="stylesheet" href="style.css">
+</head>
+<body>
+
+  <div class="page">
+    <header class="top-bar">
+      <div class="brand">
+        <div class="brand-dot"></div>
+        <div class="brand-text">Lo digo por ti</div>
+      </div>
+      <div class="language-pill">
+        <span class="lang-icon">&#127760;</span>
+        <select id="languageSelect" aria-label="Selecciona idioma">
+          <option value="es">Español</option>
+          <option value="en">English</option>
+          <option value="fr">Français</option>
+          <option value="de">Deutsch</option>
+          <option value="it">Italiano</option>
+        <option value="pt">Português</option>
+        </select>
+      </div>
+    </header>
+<section class="card hero">
+      <p class="badge" data-i18n="hero.badge">Mensajes premium</p>
+      <h1 data-i18n="hero.title">Lo digo por ti</h1>
+      <p class="subtitle" data-i18n="hero.subtitle">
+        Genera mensajes listos para enviar en segundos con un tono impecable y humano.
+      </p>
+    </section>
+
+    
+    <section class="card main-card">
+      <div class="form-grid">
+        <div class="field">
+          <label for="situationInput" data-i18n="form.situationLabel">Busca una situacion</label>
+          <input
+            id="situationInput"
+            type="text"
+            data-i18n-placeholder="form.situationPlaceholder"
+            placeholder="Ej: Recordar un pago pendiente">
+        </div>
+
+        <div class="field field-full">
+          <label for="situationTextarea" data-i18n="form.descriptionLabel">Describe tu situacion</label>
+          <textarea
+            id="situationTextarea"
+            rows="4"
+            data-i18n-placeholder="form.descriptionPlaceholder"
+            placeholder="Ej: Preste dinero a un amigo hace dos meses y quiero recordarselo sin sonar agresivo..."></textarea>
+        </div>
+
+        <div class="field">
+          <label for="toneSelect" data-i18n="form.toneLabel">Tono</label>
+          <select id="toneSelect">
+            <option value="formal" data-i18n="form.toneFormal">Formal</option>
+            <option value="cercano" data-i18n="form.toneClose">Cercano</option>
+            <option value="divertido" data-i18n="form.toneFun">Divertido</option>
+          </select>
+        </div>
+
+        <div class="field">
+          <label for="intensityRange">
+            <span data-i18n="form.intensityLabel">Intensidad</span>
+            <span id="intensityValue" class="chip">Neutro</span>
+          </label>
+          <input id="intensityRange" type="range" min="1" max="4" step="1" value="2">
+          <div class="intensity-scale">
+            <span data-i18n="form.intensity1">1 Suave</span>
+            <span data-i18n="form.intensity2">2 Neutro</span>
+            <span data-i18n="form.intensity3">3 Directo</span>
+            <span data-i18n="form.intensity4">4 Muy directo</span>
+          </div>
+        </div>
+      </div>
+
+      <div class="actions">
+        <button id="generateBtn" class="primary-btn" data-i18n="form.generateBtn" type="button">Generar mensaje</button>
+        <span class="human-badge" data-i18n="form.humanized">Texto optimizado para sonar natural y humano.</span>
+      </div>
+    </section>
+<section class="card results-card">
+      <div class="section-header">
+        <div>
+          <p class="eyebrow" data-i18n="results.eyebrow">Resultados</p>
+          <h2 data-i18n="results.title">Opciones listas para copiar</h2>
+        </div>
+      </div>
+      <div id="results" class="results">
+        <p class="muted" data-i18n="results.empty">
+          Escribe la situacion y pulsa "Generar mensaje".
+        </p>
+      </div>
+      <p class="ia-notice">Los mensajes generados por IA son orientativos. Úsalos según tu criterio.</p>
+    </section>
+
+    <section class="card examples-card">
+      <div class="section-header">
+        <div>
+          <p class="eyebrow" data-i18n="examples.eyebrow">Ejemplos</p>
+          <h3 data-i18n="examples.title">Cargar un ejemplo para empezar</h3>
+        </div>
+      </div>
+      <div id="examples" class="examples"></div>
+    </section>
+
+    <section class="card favorites-card">
+      <div class="section-header">
+        <div>
+          <p class="eyebrow" data-i18n="favorites.eyebrow">Favoritos</p>
+          <h3 data-i18n="favorites.title">Tus mensajes guardados</h3>
+        </div>
+      </div>
+      <div id="favorites" class="results">
+        <p class="muted" data-i18n="favorites.empty">Aun no has guardado favoritos.</p>
+      </div>
+    </section>
+            <footer class="site-footer">
+      <div class="footer-inner">
+        <p class="footer-copy">© 2025 Lo Digo Por Ti</p>
+        <nav class="footer-nav">
+          <a href="guias.html">Guías</a>
+          <a href="privacy.html">Privacidad</a>
+          <a href="terms.html">Términos</a>
+          <a href="cookies.html">Cookies</a>
+        </nav>
+      </div>
+    </footer>
+
+  </div>
+
+  <div id="cookieBanner" class="cookie-banner" role="dialog" aria-live="polite" aria-label="Aviso de cookies" aria-hidden="true">
+    <p>
+      Este sitio utiliza cookies técnicas y almacenamiento local para mejorar tu experiencia.
+      En el futuro podremos usar cookies de terceros para personalizar anuncios y medir su rendimiento. Más info en nuestra
+      <a href="cookies.html">Política de Cookies</a>.
+    </p>
+    <button id="cookieAcceptBtn" class="btn" type="button">Aceptar</button>
+  </div>
+<script src="script.js" defer></script>
+</body>
+</html>

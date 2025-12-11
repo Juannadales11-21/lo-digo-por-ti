@@ -1,69 +1,8 @@
-// Servidor Express para desarrollo local; en Vercel se usa la funcion serverless /api/generate-message.
-const path = require('path');
-const dotenv = require('dotenv');
-const rateLimit = require('express-rate-limit');
-const express = require('express');
-const cors = require('cors');
-const { OpenAI } = require('openai');
+import OpenAI from 'openai';
 
-// Prefer server.env for local secrets; fallback to .env if missing.
-const dotenvResult = dotenv.config({ path: path.join(__dirname, 'server.env') });
-if (dotenvResult.error) {
-  dotenv.config();
-}
-
-console.log('CLAVE CARGADA?', process.env.OPENAI_API_KEY ? 'SI' : 'NO');
-
-const app = express();
-const port = process.env.PORT || 3000;
-
-app.use(cors());
-app.use(express.json());
-app.use(express.static(path.join(__dirname)));
-
-const openai = new OpenAI({
+const client = new OpenAI({
   apiKey: process.env.OPENAI_API_KEY
 });
-
-// Limita spam en /api/generate-message con 5 peticiones por IP y minuto.
-const generateMessageLimiter = rateLimit({
-  windowMs: 60 * 1000,
-  max: 5,
-  standardHeaders: true,
-  legacyHeaders: false,
-  handler: (req, res) => {
-    res
-      .status(429)
-      .json({ error: 'Has hecho demasiadas peticiones, espera un poco antes de volver a intentarlo.' });
-  }
-});
-
-// Control diario en memoria por IP (reinicia cada dia).
-const dailyUsage = {
-  date: new Date().toISOString().slice(0, 10),
-  counts: {}
-};
-
-function resetDailyUsageIfNeeded() {
-  const today = new Date().toISOString().slice(0, 10);
-  if (dailyUsage.date !== today) {
-    dailyUsage.date = today;
-    dailyUsage.counts = {};
-  }
-}
-
-function enforceDailyLimit(req, res, next) {
-  resetDailyUsageIfNeeded();
-  const ip = req.ip || req.connection?.remoteAddress || 'unknown';
-  const current = dailyUsage.counts[ip] || 0;
-
-  if (current >= 100) {
-    return res.status(429).json({ error: 'Has alcanzado el limite diario de uso gratuito. Vuelve manana.' });
-  }
-
-  dailyUsage.counts[ip] = current + 1;
-  next();
-}
 
 // Plantillas fijas cuando la API no tiene saldo.
 const quotaFallbackMessages = [
@@ -110,8 +49,25 @@ function computeTemperature(toneLabel, intensityLevel) {
   return Math.min(1.3, Math.max(0.1, Number((base + adjust).toFixed(2))));
 }
 
-app.post('/api/generate-message', generateMessageLimiter, enforceDailyLimit, async (req, res) => {
-  const { situation, tone, channel, intensity, language } = req.body || {};
+// Nota: en entorno serverless de Vercel no hay estado persistente para rate limiting en memoria.
+// Si se necesita control de abuso, se puede agregar mas adelante con soluciones como middleware externo o KV.
+
+export default async function handler(req, res) {
+  if (req.method !== 'POST') {
+    res.setHeader('Allow', 'POST');
+    return res.status(405).json({ error: 'Method Not Allowed' });
+  }
+
+  let body = req.body;
+  if (typeof req.body === 'string') {
+    try {
+      body = JSON.parse(req.body || '{}');
+    } catch (parseError) {
+      body = {};
+    }
+  }
+
+  const { situation, tone, channel, intensity, language } = body || {};
 
   const trimmedSituation = (situation || '').trim();
   const toneLabel = (tone || 'formal').toLowerCase();
@@ -138,12 +94,12 @@ app.post('/api/generate-message', generateMessageLimiter, enforceDailyLimit, asy
 Tono: ${toneLabel}. Intensidad: ${intensityLevel} (${intensityLabel}).
 ${channelInstruction}
 - Genera 3 opciones distintas, humanas y listas para copiar.
-- No uses frases de asistente o IA. Varía la redacción entre opciones.
+- No uses frases de asistente o IA. Varヴa la redacciИn entre opciones.
 - Devuelve solo JSON valido exacto: {"messages": ["mensaje 1", "mensaje 2", "mensaje 3"]}.
 Situacion del usuario: ${trimmedSituation}`;
 
   try {
-    const completion = await openai.chat.completions.create({
+    const completion = await client.chat.completions.create({
       model: 'gpt-5-nano',
       temperature,
       messages: [
@@ -161,7 +117,7 @@ Situacion del usuario: ${trimmedSituation}`;
 
     try {
       parsed = JSON.parse(rawContent);
-    } catch (error) {
+    } catch (parseError) {
       const match = rawContent.match(/\{[\s\S]*\}/);
       if (match) {
         parsed = JSON.parse(match[0]);
@@ -174,7 +130,7 @@ Situacion del usuario: ${trimmedSituation}`;
       return res.status(500).json({ error: 'No se pudieron generar mensajes.' });
     }
 
-    res.json({ messages });
+    return res.status(200).json({ messages });
   } catch (error) {
     const quotaExceeded =
       error?.error?.code === 'insufficient_quota' || error?.status === 429 || error?.response?.status === 429;
@@ -183,14 +139,8 @@ Situacion del usuario: ${trimmedSituation}`;
     }
 
     console.error('Error al generar mensajes', error);
-    res.status(500).json({ error: 'No se pudo generar el mensaje. Intenta nuevamente en unos minutos.' });
+    return res
+      .status(500)
+      .json({ error: 'No se pudo generar el mensaje. Intenta nuevamente en unos minutos.' });
   }
-});
-
-app.get('/', (req, res) => {
-  res.sendFile(path.join(__dirname, 'index.html'));
-});
-
-app.listen(port, () => {
-  console.log(`Servidor escuchando en http://localhost:${port}`);
-});
+}
